@@ -1,0 +1,365 @@
+[% 
+if this.block.class | contains('debug');
+    if this.url.url | contains(cms.site.custom.mobile_url);
+        continue;
+    else;
+        mb_block_debug_panel;
+    end;
+end;
+thisMobile = false;
+block_expired = false;
+if this.block.custom.expiration_date;
+    expiration = this.block.custom.expiration_date + ' ' + cms.system.time('O');
+    if expiration | datetime('U') <= cms.system.time('U');
+        block_expired = true;
+    end;
+end;
+if block_expired != true;
+    call cms.component.load('core_base_library');
+    call cms.component.load('mb_base_library');
+    if this.block.assets | length > 0;
+        b = this.block; c = b.custom;
+        if this.url.url | contains(cms.site.custom.mobile_url);
+            echo '<!-- Bootstrap did not load. -->'; 
+            cms.page.add_css('components/mb_base_library/resources/styles/mb_custom_headlines_no_bootstrap.css');
+            thisMobile = true;
+        end;
+        if c.lazy_load == true && thisMoble != true;
+            placeHolder = cms.page.cdn('components/core_external_jquery_plugins/resources/images/place_holder.png');
+        end;
+        comments_facebook = core_base_library_getCustomProperty('custom_fb_comments','boolean',false);
+        comments_disqus = core_base_library_getCustomProperty('disqus', 'boolean', false);
+        if comments_disqus == true;
+            call cms.component.load('disqus');
+        end;
+        if thisMobile == true;
+            preview_size = 768;
+        else;
+            preview_size = c.preview_size;
+        end;        
+        if c.css_classes || thisMobile == true %]
+            <div class="[% echo c.css_classes; %] [% if this.url.url | contains(cms.site.custom.mobile_url); echo 'mobile-template'; end; %]">
+        [% end;
+        macro inasset_image_display_macro;
+            if c.thumbnail != false && thumb != null;
+                if thumb_orientation == 'vertical' && c.hide_verticals == true;
+                    return;
+                else; %]
+                   <figure class="thumb [% c.image_pos %]-headline [% c.thumbnail_float %] [% thumb_orientation %]-image-holder [% if c.full_wide_images == true %]fullwidth-image-holder[% end %]" >
+                       [% if c.lazy_load == true && thisMobile != true; %]
+                       <img src="[% placeHolder %]" data-original="[% thumb.url %]" class="blox-img-loader [% thumb_orientation %] [% if c.full_wide_images == true %]fullwidth-image[% end; %]" title="[% thumbasset.title | strip_tags %]" alt="[% thumbasset.title | strip_tags %]" />
+                       [% else; %]
+                       <img src="[% thumb.url %]" class="[% thumb_orientation %] [% if c.full_wide_images == true %]fullwidth-image[% end; %]" title="[% thumbasset.title | strip_tags %]" alt="[% thumbasset.title | strip_tags %]" />
+                       [% end; %]
+                       [% if c.caption != false;
+                           if c.caption_byline != false; %]
+                               <p class="byline">[% thumbasset.byline | strip_tags | html %]</p>
+                           [% end; %]
+                           <figcaption class="caption">
+                               [% thumbasset.description | strip_tags | html %]
+                           </figcaption>
+                       [% end; %]
+                   </figure>
+                [% end;
+            end;
+        end;
+        mb_block_title; %]
+        <style type="text/css">
+            #widthIndicator {
+                height: 0px;
+            }
+            #tncms-block-[% b.id %] * {
+                text-shadow: none;
+            }
+            [% if c.full_wide_images || c.matte_bg %]
+            #tncms-block-[% b.id %] figure.thumb {
+                background: [% c.matte_bg %];
+                [% if c.full_wide_images == true -%]
+                width: 100% !important;
+                [%- end; %]
+            }
+            [% end; %]
+            [% if c.full_wide_images == true %]
+            #tncms-block-[% b.id %] .fullwidth-image {
+                    display: block;
+                    margin: 0 auto;
+                    max-width: 100%;
+            }
+            [% end;
+            if c.maxHeight || c.fixedHeight; %]
+            #tncms-block-[% b.id %] article {
+                [% if c.maxHeight %]
+                    max-height: [% c.maxHeight %];
+                [% end;
+                if c.fixedHeight %]
+                    height: [% c.fixedHeight %];
+                [% end; %]
+            }
+            [% end;
+            if c.media_mode == true; %]
+                .mb-media .thumb,.mb-media .article-content{display:table-cell;vertical-align:top}.mb-media .thumb .pull-left{margin-right:15px}.mb-media .thumb .pull-right{margin-left:15px}
+            [% end;
+            if c.side_by_side != false -%]
+                @media (min-width: 600px) {
+                    #widthIndicator {
+                        height: 1px;
+                    }
+                    #tncms-block-[% b.id %] article {
+                        [% if c.side_by_side != false;
+                            if thisMobile == true; %]
+                                width: [% if c.columncount < 4; echo 100/c.columncount; else; echo '50'; end; %]%;
+                            [% else; %]
+                                width: [% 100/c.columncount %]%;
+                            [% end; %]
+                        [% end; %]
+                    }
+                    .sidebyside * {-moz-box-sizing: border-box;-webkit-box-sizing: border-box; box-sizing: border-box;}.sidebyside{overflow:hidden;*zoom:1;-webkit-box-sizing:border-box;-moz-box-sizing:border-box;box-sizing:border-box}.sidebyside article{float:left;padding:0 7.5px 0 7.5px}.sidebyside article img,.sidebyside article .thumb{max-width:100%}.sidebyside article .thumb{margin-bottom:7.5px}.sidebyside article+article{border:none;margin:0}.sidebyside article:first-of-type{padding-left:0}.sidebyside article:last-of-type{padding-right:0}.lead-side-headline article{float:right;clear:right}.lead-side-headline article.first-in-list{float:left;padding-right:15px}.lead-side-headline article.list-position-2{margin-top:0;padding-top:0;border:none}
+                }
+            [% end %]
+        </style>
+        [% if c.side_by_side != false -%]<div class="sidebyside"><div id="widthIndicator"></div>[% end;
+	if this.block.custom.expiration_date; %]
+	<!-- set to expire at [% this.block.custom.expiration_date; %] -->
+	[% end;
+        foreach b.assets as asset;
+            thumb = null;
+            thumbasset = null;
+            thumb_orientation = 'landscape';
+            if c.thumbnail != false;
+                if asset.view;
+                    thumb = asset.view('type': c.preview_type, 'width': preview_size, 'height':preview_height, 'max_height': c.preview_maxh, 'max_width': c.preview_maxw, 'min_width': c.preview_minw, 'min_height': c.preview_minh, 'aspect_ratio': c.preview_aspect);
+                    thumbasset = asset;
+                else if asset.items('type':'image','relationship':'child');
+                    thumb = asset.items('type':'image','relationship':'child')[0].view('type': c.preview_type, 'width': preview_size, 'height':preview_height, 'max_height': c.preview_maxh, 'max_width': c.preview_maxw, 'min_width': c.preview_minw, 'min_height': c.preview_minh, 'aspect_ratio': c.preview_aspect);
+                    thumbasset = asset.items('type':'image','relationship':'child')[0];
+                end;
+                if thumb.height > 1.2 * thumb.width; 
+                    thumb_orientation = "vertical"; 
+                end;
+            end;
+ %]
+                <article id="[% asset.uuid %]" class="article h-entry clearfix[% if c.media_mode == true; echo ' mb-media'; end; echo ' '; echo core_base_library_iterPosClasses(asset); echo ' '; echo core_base_library_serviceClasses(asset); echo ' '; foreach asset.tags('section') as section,display; if display | iterlast; echo display; else; echo display+' '; end; end; %]">
+                    [% if c.kicker_pos == 'thumb' || c.image_pos == 'below'; mb_asset_kicker_display; end; 
+                    if thumb != null && c.thumbnail != false && c.image_pos == 'above';
+                        inasset_image_display_macro;
+                    end; %]
+
+                        <div class="article-content">
+                            <header>
+                                [% if asset.kicker || asset.subheadline || (asset.tags('section') && c.section_titles == true) %]
+                                    <hgroup>
+                                [% end; /* hgroup opening tag check */
+                                if c.kicker_pos == 'headline'; mb_asset_kicker_display; end;
+                                if c.headline != false;
+                                    if c.headline_compensate == true && ( !thumb.url || (thumb.orientation == 'vertical' && c.hide_verticals == true)); %]
+                                        <h[% if c.headline_tag > 2; echo c.headline_tag - 1; else; echo '1'; end; %] class="headline larger p-name [% if asset.custom.webhead; echo 'webhed'; end; %]">
+                                    [% else %]
+                                        <h[% c.headline_tag %] class="headline p-name [% if asset.custom.webhead; echo 'webhed'; end; %]">
+                                    [% end; /* headline compensate */ %]
+                                    <a href="[% asset.url; mbtracking; if thisMobile; echo '&mode=jqm'; end; %]">[% mb_asset_headline; %]</a>
+                                    [% if c.headline_compensate == true && ( !thumb.url || (thumb.orientation == 'vertical' && c.hide_verticals == true )); %]
+                                        </h[% if c.headline_tag > 2; echo c.headline_tag - 1; else; echo '1'; end; %]>
+                                    [% else; %]
+                                        </h[% c.headline_tag %]>
+                                    [% end; /* headline compensate */
+                                end; /* headline toggle */
+                                if asset.subheadline %]
+                                    <h[% c.headline_tag + 1 %] class="subheadline">[% asset.subheadline %]</h[% c.headline_tag + 1 %]>
+                                [% end;
+                                if asset.kicker || asset.subheadline || (asset.tags('section') && c.section_titles == true); %]
+                                    </hgroup>
+                                [% end; /* hgroup closing tag check */ %]
+                            </header>
+                            [% if c.image_pos == "below";
+                                inasset_image_display_macro;
+                            end; 
+                            if c.byline != false; %]
+                                <div class="byline p-author">
+                                    [% mb_byline_display(asset) %]
+                                </div>
+                            [% end; /* byline toggle */ 
+                            if c.tease != false; %]
+                                <div class="tease p-summary">
+                                    [% if asset.type == 'event'; %]
+                                        <ul class="inline">
+                                            <li><span class="icon-calendar fa fa-calendar"></span> [% asset.eventstarttime('l, M. j, g:i a') %]</li>
+                                            [% if asset.venue_name %]
+                                                <li><span class="icon-globe fa fa-globe"></span> [% echo asset.venue_name; if asset.venue_city; echo ', ' + asset.venue_city | titlecase; end; if asset.venue_state; echo ', ' + asset.venue_state | uppercase; end; %]</li>
+                                            [% end; %]
+                                        </ul>
+                                    [% end; /* event type check */
+                                    if c.full_content == true;
+                                        if asset.type == 'event';
+                                            asset_content = asset.content;
+                                        else;
+                                            asset_content = asset.paragraphs;
+                                        end;
+                                        foreach asset_content as paragraph;
+                                            echo paragraph | autolink;
+                                        end;
+                                    else;
+                                        if asset.type == 'event';
+                                            core_base_library_leadIn(asset) | firstwords(50);
+                                        else;
+                                            if c.truncate;
+                                                echo core_base_library_leadIn(asset) | firstwords(c.truncate,'...');
+                                            else;
+                                                core_base_library_leadIn(asset);
+                                            end;
+                                        end;
+                                    end; %]
+                                </div>
+                            [% end; /* tease toggle */
+                            if c.meta != false %]
+                                <footer class="meta [% c.meta_float %]">
+                                    <ul class="inline">
+                                        [% if c.flags != false || c.flag_new != false || c.service_classes != false; %]
+                                        <li class="[% c.flags_float %]">
+                                            [% if c.flag_new != false; 
+                                                if asset.lastupdated;
+                                                    if cms.system.time('U') - asset.lastupdated('U') < 3600; %]
+                                                        <span class="label label-info">Updated</span>
+                                                    [% end;
+                                                else if cms.system.time('U') - asset.starttime('U') < 3600 %]
+                                                    <span class="label label-important">New</span>
+                                                [% end; /* updated vs. new check */
+                                            end; /* new flags togle */
+                                            if c.service_classes != false;
+                                                if c.flag_premium != false && core_base_library_serviceClasses(asset) | contains('premium') && asset.custom.disabletracker != true; %]
+                                                    <span class="label label-warning">Premium</span>
+                                                [% else if c.flag_free != false && core_base_library_serviceClasses(asset) | contains('no-service'); %]
+                                                    <span class="label label-success">Free Read</span>
+                                                [% else if c.flag_free != false && (asset.custom.disabletracker == true || asset.custom.metering_bypass == true); %]
+                                                    <span class="label label-success">Free Read</span>
+                                                [% end; /* free premium flag check */
+                                            end; /* service classes flags toggle */
+                                            if c.flags != false;
+                                                mb_assetFlags(asset);
+                                            end; %]
+                                        </li>
+                                        [% end; /* flags toggle */
+                                        if c.posted_time != false && asset.type != "event" %]
+                                        <li class="posted-time">
+                                            [% if asset.lastupdated %]
+                                            <span class="icon-time fa fa-clock-o"></span> Updated: 
+                                                [% if cms.system.time('d') - 1 == asset.lastupdated('d') && asset.lastupdated('m/y') == cms.system.time('m/y'); /* if it was updated yesterday */ %]
+                                                <time class="updated" datetime="[% asset.lastupdated('c') %]"><span class="value">Yesterday</span></time> 
+                                                [% else if asset.lastupdated('d') < cms.system.time('d') && asset.lastupdated('m') == cms.system.time('m') || asset.lastupdated('m') < cms.system.time('m') || asset.lastupdated('y') < cms.system.time('y'); %]
+                                                <time class="updated" datetime="[% asset.lastupdated('c') %]"><span class="value">[% echo asset.lastupdated('M. j, Y')  | replace('Mar.','March') | replace('Apr.','April') | replace('Jun.','June') | replace('Jul.','July') | replace('Sep.','Sept.') %]</span></time> 
+                                                [% else; %]
+                                                <time class="updated" datetime="[% asset.lastupdated('c') %]"><span class="value">[% echo asset.lastupdated('g:i a') | replace('am','a.m.') | replace('pm','p.m.') %]</span></time> 
+                                                [% end;
+                                            else; %]
+                                            <span class="icon-time fa fa-clock-o"></span> Posted: 
+                                                [% if cms.system.time('d') - 1 == asset.starttime('d') && asset.starttime('m/y') == cms.system.time('m/y'); /* if it was updated yesterday */ %]
+                                                <time class="published" datetime="[% asset.starttime('c') %]"><span class="value">Yesterday</span></time> 
+                                                [% else if asset.starttime('d') < cms.system.time('d') && asset.starttime('m') == cms.system.time('m') || asset.starttime('m') < cms.system.time('m') || asset.starttime('y') < cms.system.time('y'); %]
+                                                <time class="published" datetime="[% asset.starttime('c') %]"><span class="value">[% echo asset.starttime('M. j, Y')  | replace('Mar.','March') | replace('Apr.','April') | replace('Jun.','June') | replace('Jul.','July') | replace('Sep.','Sept.') %]</span></time> 
+                                                [% else; %]
+                                                <time class="published" datetime="[% asset.starttime('c') %]"><span class="value">[% echo asset.starttime('g:i a') | replace('am','a.m.') | replace('pm','p.m.') %]</span></time> 
+                                                [% end; %]
+                                            [% end; %]
+                                        </li>
+                                    [% end; /* posted_time toggle */                                    
+                                    if c.permalink != false %]<li><a class="u-url" href="[% asset.url('absolute':true) %]" title="Permalink to [% asset.title %]"><span class="fa fa-link"></span></a></li>[% end;
+                                    if asset.tags('keyword') && c.tags != false %]<li>Tags: 
+                                        [% mb_assetKeywords(asset); -%]                        
+                                    </li>[% end %]
+                                    [% if c.sectiontags != false %]<li>[% c.sectiontags_text %]
+                                        [% foreach asset.tags('section') as tag,display; 
+                                            echo '<a href="/' + tag + '">';
+                                            echo display | replace('_',' ') | titlecase;
+                                            if display | iterlast;
+                                                echo '';
+                                            else;
+                                                echo ', ';
+                                            end;
+                                            echo '</a>';
+                                        end; %]
+                                    </li>[% end; %]
+                                    [% if asset.tags('geo') && c.geotags != false %]<li>
+                                        [% foreach asset.tags('geo') as geotag;
+                                            echo '<span class="fa fa-map-marker"></span> ';
+                                            echo geotag | replace('_',' ') | titlecase;
+                                            if geotag | iterlast;
+                                                echo '';
+                                            else;
+                                                echo ', ';
+                                            end;
+                                        end; %]
+                                    </li>[% end; %]
+                                    [% if c.comment_count != false && comments_disqus != true && comments_facebook != true && asset.type != "event" %]
+                                    <li class="comment-count">
+                                        [% if asset.comments | length == 0;
+                                             if c.show_empty_comments == true %]
+                                                <span class="icon-comments fa fa-comments fa fa-comments"></span> <a href="[% asset.url %]?mode=comments">Add your comment</a>
+                                             [% else;
+                                                 return;
+                                             end;
+                                        else; %]
+                                            <span class="icon-comments fa fa-comments"></span> <a href="[% asset.url %]?mode=comments">[% echo asset.comments | length; %]</a>
+                                        [% end; %]
+                                    </li>
+                                    [% else if c.comment_count != false && comments_disqus == true; %]
+                                    <li class="comment-count">
+                                        <span class="icon-comments fa fa-comments"></span> [% disqus_comment_count(asset); %]
+                                    </li>
+                                    [% else if c.comment_count != false && comments_facebook == true; %]
+                                    <li class="comment-count">
+                                        <span class="icon-comments fa fa-comments"></span> <fb:comments-count href=[% asset.url('absolute':true) %]></fb:comments-count> comments
+                                    </li>
+                                    [% end; /* comment_count toggle */ 
+                                    if c.share == true; mbshare_tools_micro(asset); end; %]
+                            </ul>
+                            [% if c.related_items == true || asset.custom.related_items == true;
+                                if asset.items('relationship':'sibling','type':'article'); %]
+                                    <ul class="related inline">
+                                        [% foreach asset.items('relationship':'sibling','type':'article') as rstory;
+                                            if rstory | iterpos < c.related_number; %]
+                                                <li><strong>Related:</strong> <a href="[% rstory.url %]">[% rstory.title | html %]</a></li>
+                                            [% end;
+                                        end; %]
+                                    </ul>
+                                [% end;
+                            end; 
+                            if asset.custom.more_link && asset.custom.more_link_text; %]
+                               <ul class="related inline">
+                                   <li><strong>More:</strong> <a href="[% asset.custom.more_link %]">[% asset.custom.more_link_text | html %]</a></li>
+                               </ul>
+                            [% end; %]
+                    </footer>
+                    [% end; /* meta toggle */ %]
+                </div><!-- .article-content -->
+        </article>
+        [% end; /* end of loop */
+        if c.side_by_side != false -%]</div><!-- sidebyside -->
+        [% if thisMobile == true; %]
+        <script type="text/javascript">
+            $(document).ready(function(){
+                console.log('Height adjustment beginning...');
+                if ( $('#tncms-block-[% b.id %] #widthIndicator').css('height') == '1px' ) {
+                    var artHeight = 0;
+                    $('.mobile-template article').each(function(){
+                        if ( $(this).height() > artHeight ) { artHeight = $(this).height(); }
+                    });
+                    $('#tncms-block-[% b.id %] .mobile-template article').height(artHeight).addClass('heightAdjusted');
+                    console.log('Height adjustment successful.');
+                } else {
+                    console.log('Height adjustment not completed.');
+                }
+            });
+        </script>
+        [% end; %]
+        [% end; %]
+        [% if c.more_link %]
+            <div class="more-link clearfix" style="margin-top: 1em;">
+                <a href="[% c.more_link %]" class="[% if c.more_link_button == true; %]btn btn-[% echo c.more_link_color; if c.more_link_mini == true; %] btn-mini [% end; end; echo ' '+c.more_link_align %]" [% if thisMobile == true %]data-role="button"[% end; if thisMobile == true && c.more_link_mini == true %]data-mini="true"[% end; %]>
+                    [% if c.more_link_icon && c.more_link_icon_pos == 'left'; %]<span class="fa [% c.more_link_icon %]"></span> [% end; c.more_link_text; if c.more_link_icon && c.more_link_icon_pos == 'right'; %] <span class="fa [% c.more_link_icon %]"></span>[% end; %]
+                </a>
+            </div><!-- .more-link -->
+        [% end %]
+        [% if c.css_classes;
+            echo '</div>';
+        end;
+    end; /* length check */
+end; /* block expiration check */ %]
